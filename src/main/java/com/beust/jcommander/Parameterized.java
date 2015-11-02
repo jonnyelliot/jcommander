@@ -12,21 +12,22 @@ import java.util.List;
 import com.beust.jcommander.internal.Lists;
 
 /**
- * Encapsulate a field or a method annotated with @Parameter or @DynamicParameter
+ * Encapsulate a field or a method annotated with @Parameter
+ * or @DynamicParameter
  */
 public class Parameterized {
 
   // Either a method or a field
-  private Field m_field;
-  private Method m_method;
+  private final Field m_field;
+  private final Method m_method;
   private Method m_getter;
 
   // Either of these two
-  private WrappedParameter m_wrappedParameter;
-  private ParametersDelegate m_parametersDelegate;
+  private final WrappedParameter m_wrappedParameter;
+  private final ParametersDelegate m_parametersDelegate;
 
-  public Parameterized(WrappedParameter wp, ParametersDelegate pd,
-      Field field, Method method) {
+  public Parameterized(WrappedParameter wp, ParametersDelegate pd, Field field,
+      Method method) {
     m_wrappedParameter = wp;
     m_method = method;
     m_field = field;
@@ -46,11 +47,12 @@ public class Parameterized {
         Annotation delegateAnnotation = f.getAnnotation(ParametersDelegate.class);
         Annotation dynamicParameter = f.getAnnotation(DynamicParameter.class);
         if (annotation != null) {
-          result.add(new Parameterized(new WrappedParameter((Parameter) annotation), null,
-              f, null));
+          result.add(new Parameterized(new WrappedParameter((Parameter) annotation),
+              null, f, null));
         } else if (dynamicParameter != null) {
-          result.add(new Parameterized(new WrappedParameter((DynamicParameter) dynamicParameter), null,
-              f, null));
+          result.add(new Parameterized(
+              new WrappedParameter((DynamicParameter) dynamicParameter), null, f,
+              null));
         } else if (delegateAnnotation != null) {
           result.add(new Parameterized(null, (ParametersDelegate) delegateAnnotation,
               f, null));
@@ -68,11 +70,11 @@ public class Parameterized {
         Annotation delegateAnnotation = m.getAnnotation(ParametersDelegate.class);
         Annotation dynamicParameter = m.getAnnotation(DynamicParameter.class);
         if (annotation != null) {
-          result.add(new Parameterized(new WrappedParameter((Parameter) annotation), null,
-              null, m));
+          result.add(new Parameterized(new WrappedParameter((Parameter) annotation),
+              null, null, m));
         } else if (dynamicParameter != null) {
-          result.add(new Parameterized(new WrappedParameter((DynamicParameter) annotation), null,
-              null, m));
+          result.add(new Parameterized(
+              new WrappedParameter((DynamicParameter) annotation), null, null, m));
         } else if (delegateAnnotation != null) {
           result.add(new Parameterized(null, (ParametersDelegate) delegateAnnotation,
               null, m));
@@ -108,9 +110,8 @@ public class Parameterized {
     try {
       if (m_method != null) {
         if (m_getter == null) {
-            m_getter = m_method.getDeclaringClass()
-                .getMethod("g" + m_method.getName().substring(1),
-                new Class[0]);
+          m_getter = m_method.getDeclaringClass()
+              .getMethod("g" + m_method.getName().substring(1), new Class[0]);
         }
         return m_getter.invoke(object);
       } else {
@@ -129,9 +130,9 @@ public class Parameterized {
           setFieldAccessible(field);
           result = field.get(object);
         }
-      } catch(NoSuchFieldException ex) {
+      } catch (NoSuchFieldException ex) {
         // ignore
-      } catch(IllegalAccessException ex) {
+      } catch (IllegalAccessException ex) {
         // ignore
       }
       return result;
@@ -155,23 +156,30 @@ public class Parameterized {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
+    if (this == obj) {
       return true;
-    if (obj == null)
+    }
+    if (obj == null) {
       return false;
-    if (getClass() != obj.getClass())
+    }
+    if (getClass() != obj.getClass()) {
       return false;
+    }
     Parameterized other = (Parameterized) obj;
     if (m_field == null) {
-      if (other.m_field != null)
+      if (other.m_field != null) {
         return false;
-    } else if (!m_field.equals(other.m_field))
+      }
+    } else if (!m_field.equals(other.m_field)) {
       return false;
+    }
     if (m_method == null) {
-      if (other.m_method != null)
+      if (other.m_method != null) {
         return false;
-    } else if (!m_method.equals(other.m_method))
+      }
+    } else if (!m_method.equals(other.m_method)) {
       return false;
+    }
     return true;
   }
 
@@ -185,9 +193,9 @@ public class Parameterized {
 
   private static void setFieldAccessible(Field f) {
     if (Modifier.isFinal(f.getModifiers())) {
-      throw new ParameterException(
-        "Cannot use final field " + f.getDeclaringClass().getName() + "#" + f.getName() + " as a parameter;"
-        + " compile-time constant inlining may hide new values written to it.");
+      throw new ParameterException("Cannot use final field "
+          + f.getDeclaringClass().getName() + "#" + f.getName() + " as a parameter;"
+          + " compile-time constant inlining may hide new values written to it.");
     }
     f.setAccessible(true);
   }
@@ -201,7 +209,7 @@ public class Parameterized {
       if (m_method != null) {
         m_method.invoke(object, value);
       } else {
-          m_field.set(object, value);
+        m_field.set(object, value);
       }
     } catch (IllegalAccessException | IllegalArgumentException ex) {
       throw new ParameterException(errorMessage(m_method, ex));
@@ -232,9 +240,10 @@ public class Parameterized {
   }
 
   /**
-   * @return the generic type of the collection for this field, or null if not applicable.
+   * @return the generic type of the collection for this field, or null if not
+   *         applicable.
    */
-  public Type findFieldGenericType() {
+  public Class<?> findFieldGenericType() {
     if (m_method != null) {
       return null;
     } else {
@@ -242,7 +251,7 @@ public class Parameterized {
         ParameterizedType p = (ParameterizedType) m_field.getGenericType();
         Type cls = p.getActualTypeArguments()[0];
         if (cls instanceof Class) {
-          return cls;
+          return (Class<?>) cls;
         }
       }
     }
